@@ -27,7 +27,7 @@ AltServer for Linux is from [NyaMisty](https://github.com/NyaMisty),so you shoul
 
 Just run `python3 run.py` and follow the instruction
 
-***Not work on every linux distribution and architectures,report issues to [issues](https://github.com/powenn/AltServer-Linux-ShellScript/issues)***
+***Not work on every linux distribution and architectures,report issues to [issues](https://github.com/powenn/AltServer-Linux-PyScript/issues)***
 
 ## Get start
 
