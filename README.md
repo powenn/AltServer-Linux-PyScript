@@ -1,5 +1,5 @@
 # AltServer-Linux-PyScript
-AltServer-Linux Script python edition
+## AltServer-Linux Script python edition
 
 AltServer from https://github.com/NyaMisty/AltServer-Linux/releases
 
