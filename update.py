@@ -15,14 +15,14 @@ os.chdir(DIRPATH)
 
 UpdateLog="""
 
-What updated in version $LatestVersion ?
+What updated in version %s ?
   Script:
     - Improved code
     - First version of python edition
     
 For more information: https://github.com/powenn/AltServer-Linux-PyScript
 << PLease rerun the script to apply the new version >>
-"""
+""" %LatestVersion
 
 if LatestVersion != LocalVersion :
     GetReleaseCMD='wget https://github.com/powenn/AltServer-Linux-PyScript/releases/download/%s/AltServer-%s.zip' %(LatestVersion,Arch)
