@@ -11,6 +11,8 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 
 For ShellScript edition,you can get from [AltServer-Linux-ShellScript](https://github.com/powenn/AltServer-Linux-ShellScript)
 
+For GUI edition,you can get from [AltServer-LinuxGUI](https://github.com/powenn/AltServer-LinuxGUI)
+
 ## Features
 - account saving
 - enter number to select and use saved account
