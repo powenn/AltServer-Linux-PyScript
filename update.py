@@ -17,8 +17,9 @@ UpdateLog="""
 
 What updated in version %s ?
   Script:
-    - Improved code
-    - First version of python edition
+    - None
+  AltStore:
+    - Updated to 1.4.9
     
 For more information: https://github.com/powenn/AltServer-Linux-PyScript
 << PLease rerun the script to apply the new version >>
