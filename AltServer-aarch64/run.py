@@ -4,13 +4,14 @@
 # import 
 import os
 import subprocess
+import getpass
 # Check source and permission
 DIRPATH=os.path.dirname(os.path.abspath(__file__))
 os.chdir(DIRPATH)
 
 print("Checking source")
 if not os.path.exists('AltStore.ipa'):
-    subprocess.run("wget https://github.com/powenn/AltServer-Linux-PyScript/raw/main/AltStore.ipa",shell=True)
+    subprocess.run("wget -O AltStore.ipa https://cdn.altstore.io/file/altstore/altstore.ipa",shell=True)
 if not os.path.exists('main.py'):
     subprocess.run("wget https://github.com/powenn/AltServer-Linux-PyScript/raw/main/main.py",shell=True)
 if not os.path.exists('ipa'):

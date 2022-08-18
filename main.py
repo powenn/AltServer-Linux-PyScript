@@ -4,6 +4,7 @@
 # import 
 import os
 import subprocess
+import getpass
 
 DIRPATH=os.path.dirname(os.path.abspath(__file__))
 os.chdir(DIRPATH)
@@ -26,14 +27,14 @@ def AskAccount() :
     global AppleID
     global password
     if HasExistAccount != "" :
-        reply=getAnswer("Do you want to use saved Account ? [y/n] :")
+        reply=getAnswer("Do you want to use saved Account ? [y/n]: ")
         if reply.lower() == "n" or reply.lower() == "no":
             UseExistAccount=0
         if reply.lower() == "y" or reply.lower() == "yes":
             UseExistAccount=1
             print("Which account you want to use ? ")
             subprocess.run("nl saved.txt",shell=True)
-            number=getAnswer("please enter the number :")
+            number=getAnswer("please enter the number: ")
             AppleIDCMD='sed -n %sp saved.txt | cut -d , -f 1' %number
             passwordCMD='sed -n %sp saved.txt | cut -d , -f 2' %number
             AppleID=subprocess.check_output(AppleIDCMD,shell=True).decode('utf-8').replace("\n", "")
@@ -41,8 +42,8 @@ def AskAccount() :
     if HasExistAccount == "" :
         UseExistAccount=0
     if UseExistAccount == 0 :
-        AppleID=getAnswer("Please provide your AppleID :")
-        password=getAnswer("Please provide the password of AppleID :")
+        AppleID=getAnswer("Please provide your AppleID: ").lower()
+        password=getpass.getpass("Please provide the password of AppleID: ")
 
 # Execute AltServer
 # Check if this account existed before
@@ -65,7 +66,7 @@ def ipaCheck() :
         ipaListCMD='echo "%s" > ipaList.txt' %HasExistipa
         subprocess.run(ipaListCMD,shell=True)
         subprocess.run("nl ipaList.txt",shell=True)
-        ipanumber=getAnswer("Please provide the number of ipa :")
+        ipanumber=getAnswer("Please provide the number of ipa: ")
         ExistipaCMD='sed -n %sp ipaList.txt' %ipanumber
         Existipa=subprocess.check_output(ExistipaCMD,shell=True).decode('utf-8').replace("\n", "")
     if HasExistipa == "" :
@@ -74,7 +75,7 @@ def ipaCheck() :
 
 # Ask to save the new account
 def SaveAcccount() :
-    ans=getAnswer("Do you want to save this Account ? [y/n] :")
+    ans=getAnswer("Do you want to save this Account ? [y/n]: ")
     if ans.lower() == "n" or ans.lower() == "no":
         pass
     if ans.lower() == "y" or ans.lower() == "yes":
@@ -103,7 +104,7 @@ subprocess.run('idevicepair pair > /dev/null',shell=True)
 RunScriptMain=0
 while RunScriptMain==0 :
     print(HELP2)
-    option=getAnswer("Enter OPTION to continue :")
+    option=getAnswer("Enter OPTION to continue: ")
     if option == '1' : # Install-AltStore
         mainScript=1
         RunScriptMain=1
