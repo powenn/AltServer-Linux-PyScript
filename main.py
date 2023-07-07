@@ -1,137 +1,320 @@
-# AltServer-Linux Script python edition
-# Author of the script : powen
-
-# import 
 import os
+import getpass
+import datetime
+import platform
+import requests
 import subprocess
 
-DIRPATH=os.path.dirname(os.path.abspath(__file__))
-os.chdir(DIRPATH)
+DEBUGGING = False
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
-HasExistAccount=subprocess.check_output("cat saved.txt",shell=True).decode('utf-8')
-HasExistipa=subprocess.check_output("ls ipa",shell=True).decode('utf-8')
-UDID=subprocess.check_output("lsusb -v 2> /dev/null | grep -e 'Apple Inc' -A 2 | grep iSerial | awk '{print $3}'",shell=True).decode('utf-8').replace("\n", "")
-global PATH
-# Default var
-mainScript=0
-NoIpaFile=0
-AccountSaving=0
-# Def
+
+# ANISETTE-SERVER
+ANISETTE_HOST = "127.0.0.1"
+ANISETTE_PORT = 6969
+
+# ARCH
+ARCH = platform.machine()
+if ARCH == "armv7l":
+    ARCH = "armv7"
+NETMUXD_AVAILABLE_ARCHS = ("x86_64", "aarch64", "armv7")
+NETMUXD_IS_AVAILABLE = ARCH in NETMUXD_AVAILABLE_ARCHS
+Netmuxd_is_on = True if  NETMUXD_IS_AVAILABLE else False
+
+
+# DIRECTORY
+CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
+RESOURCE_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "resource")
+
+# VERSIONS
+ALTSERVER_VERSION = "v0.0.5"
+ALTSTORE_VERSION = "1_6_3"
+NETMUXD_VERSION = "v0.1.4"
+ANISETTE_SERVER_VERSION = "2.1.0"
+
+# PATH AND URL
+ALTSERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "AltServer")
+ALTSERVER_URL = f"https://github.com/NyaMisty/AltServer-Linux/releases/download/{ALTSERVER_VERSION}/AltServer-{ARCH}"
+
+ALTSTORE_PATH = os.path.join(RESOURCE_DIRECTORY, "AltStore.ipa")
+ALTSTORE_URL = f"https://cdn.altstore.io/file/altstore/apps/altstore/{ALTSTORE_VERSION}.ipa"
+
+NETMUXD_PATH = os.path.join(RESOURCE_DIRECTORY, "netmuxd")
+NETMUXD_URL = f"https://github.com/jkcoxson/netmuxd/releases/download/{NETMUXD_VERSION}/{ARCH}-linux-netmuxd"
+
+ANISETTE_SERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "anisette-server")
+ANISETTE_SERVER_URL = f"https://github.com/Dadoum/Provision/releases/download/{ANISETTE_SERVER_VERSION}/anisette-server-{ARCH}"
+
+
 def getAnswer(text):
-     return input(text)
+    try:
+        return input(text)
+    except KeyboardInterrupt:
+        print("\nCtrl+C pressed, aborting")
+        exit(-2)
 
-# Check if there exists saved account
-# Ask if want to use saved account
-def AskAccount() :
-    global AppleID
-    global password
-    if HasExistAccount != "" :
-        reply=getAnswer("Do you want to use saved Account ? [y/n] :")
-        if reply.lower() == "n" or reply.lower() == "no":
-            UseExistAccount=0
-        if reply.lower() == "y" or reply.lower() == "yes":
-            UseExistAccount=1
-            print("Which account you want to use ? ")
-            subprocess.run("nl saved.txt",shell=True)
-            number=getAnswer("please enter the number :")
-            AppleIDCMD='sed -n %sp saved.txt | cut -d , -f 1' %number
-            passwordCMD='sed -n %sp saved.txt | cut -d , -f 2' %number
-            AppleID=subprocess.check_output(AppleIDCMD,shell=True).decode('utf-8').replace("\n", "")
-            password=subprocess.check_output(passwordCMD,shell=True).decode('utf-8').replace("\n", "")
-    if HasExistAccount == "" :
-        UseExistAccount=0
-    if UseExistAccount == 0 :
-        AppleID=getAnswer("Please provide your AppleID :")
-        password=getAnswer("Please provide the password of AppleID :")
 
-# Execute AltServer
-# Check if this account existed before
-def AltServer() :
-    global AccountSaving
-    AltServerCMD='./AltServer -u %s -a %s -p %s %s' % (UDID,AppleID,password,PATH)
-    subprocess.run(AltServerCMD,shell=True)
-    subprocess.run('read key',shell=True)
-    if CheckAccount.returncode == 1 :
-        AccountSaving=1
-    if CheckAccount.returncode == 0 :
-        AccountSaving=0
+def DebugPrint(msg):
+    now = datetime.datetime.now().strftime(TIME_FORMAT)
+    if DEBUGGING:
+        print(f"[DEBUG] {now}\n== {msg} ==")
 
-# Check if there exists ipa files in ipa folder
-# Ask which ipa want to install
-def ipaCheck() :
-    global NoIpaFile
-    global Existipa
-    if HasExistipa != "" :
-        ipaListCMD='echo "%s" > ipaList.txt' %HasExistipa
-        subprocess.run(ipaListCMD,shell=True)
-        subprocess.run("nl ipaList.txt",shell=True)
-        ipanumber=getAnswer("Please provide the number of ipa :")
-        ExistipaCMD='sed -n %sp ipaList.txt' %ipanumber
-        Existipa=subprocess.check_output(ExistipaCMD,shell=True).decode('utf-8').replace("\n", "")
-    if HasExistipa == "" :
-        print("There is no ipa filess in ipa folder ")
-        NoIpaFile=1
 
-# Ask to save the new account
-def SaveAcccount() :
-    ans=getAnswer("Do you want to save this Account ? [y/n] :")
-    if ans.lower() == "n" or ans.lower() == "no":
+def CheckResource():
+    if not os.path.exists(RESOURCE_DIRECTORY):
+        print("Creating 'resource' directory")
+        os.mkdir(RESOURCE_DIRECTORY)
+    if not os.path.exists(ALTSERVER_PATH):
+        print("Downloading Altserver")
+        response = requests.get(ALTSERVER_URL)
+        open(ALTSERVER_PATH, "wb").write(response.content)
+    if not os.path.exists(ALTSTORE_PATH):
+        print("Downloading AltStore ipa")
+        response = requests.get(ALTSTORE_URL)
+        open(ALTSTORE_PATH, "wb").write(response.content)
+    if not os.path.exists(NETMUXD_PATH) and NETMUXD_IS_AVAILABLE:
+        print("Downloading netmuxd")
+        response = requests.get(NETMUXD_URL)
+        open(NETMUXD_PATH, "wb").write(response.content)
+    if not os.path.exists(ANISETTE_SERVER_PATH):
+        print("Downloading anisette-server")
+        response = requests.get(ANISETTE_SERVER_URL)
+        open(ANISETTE_SERVER_PATH, "wb").write(response.content)
+
+    if not os.access(ALTSERVER_PATH, os.X_OK):
+        print("Setting AltServer exec permission")
+        os.chmod(ALTSERVER_PATH, 0o755)
+    if not os.access(NETMUXD_PATH, os.X_OK):
+        print("Setting netmuxd exec permission")
+        os.chmod(NETMUXD_PATH, 0o755)
+    if not os.access(ANISETTE_SERVER_PATH, os.X_OK):
+        print("Setting anisette-server permission")
+        os.chmod(ANISETTE_SERVER_PATH, 0o755)
+
+    DebugPrint(subprocess.getoutput(f"ls -al {RESOURCE_DIRECTORY}"))
+
+
+def CheckNetworkConnection() -> bool:
+    try:
+        requests.get('http://google.com')
+        return True
+    except:
+        return False
+
+
+class AnisetteServer:
+    def __init__(self, host=ANISETTE_HOST, port=ANISETTE_PORT):
+        self.host = host
+        self.port = port
+        os.environ["ALTSERVER_ANISETTE_SERVER"] = f"http://{host}:{port}"
+        DebugPrint(os.environ["ALTSERVER_ANISETTE_SERVER"])
+        DebugPrint(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}")
+        self.server = subprocess.Popen(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}", shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+
+    def kill(self):
+        print(subprocess.getoutput("killall anisette-server"))
+
+class AltServerDaemon:
+    def __init__(self, Anisette_Server: AnisetteServer):
+        self.Anisette_Server = Anisette_Server
+        self.start()
+
+    def start(self):
+        self.altserver = subprocess.Popen(ALTSERVER_PATH,shell=True)#,env=os.environ)
+
+    def kill(self):
+        print(subprocess.getoutput("killall AltServer"))
+
+    def restart(self):
+        self.kill()
+        self.start()
+
+class Netmuxd:
+    def __init__(self):
+        if Netmuxd_is_on :
+            if subprocess.getoutput("echo $(pidof usbmuxd)")!="" :
+                print(subprocess.getoutput("sudo kill -9 $(pidof usbmuxd)"))
+            self.start()
+
+    def start(self):
+        self.netmuxd = subprocess.Popen(f"sudo -b {NETMUXD_PATH}",shell=True)
+    def kill(self):
+        print(subprocess.getoutput("sudo killall netmuxd"))
+
+    def switchWiFi(self):
+        global Netmuxd_is_on
+        Netmuxd_is_on = True
+        DebugPrint(f"NETMUXD : {Netmuxd_is_on}")
+        print(subprocess.getoutput("sudo kill -9 $(pidof usbmuxd)"))
+        self.kill()
+        self.start()
+
+    def switchTether(self):
+        global Netmuxd_is_on
+        Netmuxd_is_on=False
+        DebugPrint(f"NETMUXD : {Netmuxd_is_on}")
+        print(subprocess.getoutput("sudo usbmuxd"))
+        self.kill()
+
+def getSUDO():
+    output = ""
+    password = ""
+    while output[:-1] != "0000":
+        password = getAnswer("Enter sudo password : ")
+        p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, text=True,shell=True)
+        prompt = p.communicate(password + '\n')
+        output = prompt[0]
+    DebugPrint(output[:-1])
+
+
+class iDevice:
+    def __init__(self, name, UDID):
+      self.name = name
+      self.UDID = UDID
+
+
+class DeviceManager:
+    def __init__(self,devices=[]):
+        self.devices = devices
+
+    def getDevices(self) -> list[iDevice]:
+        DebugPrint(f"NETMUXD : {Netmuxd_is_on}")
+        self.devices = []
+        udids = subprocess.getoutput("idevice_id -n").split('\n') if Netmuxd_is_on else subprocess.getoutput("idevice_id -l").split('\n')
+        DebugPrint(udids)
+        if udids == ['']:
+            print("No devices found")
+        else :
+            for udid in udids:
+                name = subprocess.getoutput(f"ideviceinfo -n -u {udid} -k DeviceName") if Netmuxd_is_on else subprocess.getoutput(f"ideviceinfo -u {udid} -k DeviceName")
+                d = iDevice(name=name,UDID=udid)
+                self.devices.append(d)
+        return self.devices 
+
+        
+class InstallationManager:
+    def __init__(self):
         pass
-    if ans.lower() == "y" or ans.lower() == "yes":
-        SaveAcccountCMD='echo "%s" >> saved.txt' %Account
-        subprocess.run(SaveAcccountCMD,shell=True)
-        print("saved")
 
-# Help2 message
-HELP2="""
+    def selectDevice(self,devices:list[iDevice]):
+        for i in range(len(devices)):
+            print(f"[{i}] : {devices[i].name} , {devices[i].UDID}")
+        index = int(getAnswer("Enter the index of the device for installation : "))
+        self.selectedDevice = devices[index]
 
-----------------------
-InstallUsage: [OPTION]
+    def getAccount(self):
+        ac = getAnswer("Enter your Apple ID : ")
+        self.account = ac
+
+    def getPassword(self):
+        pd = getpass.getpass("Enter password of the Apple ID : ")
+        self.password = pd
+
+    def selectFile(self):
+        answer  = getAnswer("Do you want to install AltStore ? (y/n) [n for select your own iPA] : ").lower()
+        if answer == 'n':
+            self.filePath = getAnswer("Enter the absolute path of the file : ")
+        else :
+            self.filePath = ALTSTORE_PATH
+        
+    def run(self):
+        subprocess.run(f"{ALTSERVER_PATH} -u {self.selectedDevice.UDID} -a {self.account} -p {self.password} {self.filePath}",shell=True)
+
+
+    def getInfo(self)->str:
+        return [self.selectedDevice.name,self.account,self.password,self.filePath]
+
+
+
+def main():
+    if CheckNetworkConnection() == False:
+        print("Please connect to network and re-run the script")
+        exit(-1)
+    CheckResource()
+    if NETMUXD_IS_AVAILABLE:
+        getSUDO()
+    anisetteserver = AnisetteServer()
+    netmuxd = Netmuxd()
+    altserverdaemon = AltServerDaemon(anisetteserver)
+    device_manager = DeviceManager()
+    installaion_manager = InstallationManager()
+    print(HELP_MSG)
+    while True:
+        option = getAnswer("Enter OPTION to continue : ").lower()
+
+        if option == 'i':
+            devices = device_manager.getDevices()
+            if len(devices) == 0:
+                continue
+            installaion_manager.selectDevice(devices=devices)
+            installaion_manager.getAccount()
+            installaion_manager.getPassword()
+            installaion_manager.selectFile()
+            DebugPrint(installaion_manager.getInfo())
+            installaion_manager.run()
+
+        elif option == 'w':
+            if NETMUXD_IS_AVAILABLE:
+                netmuxd.switchWiFi()
+                altserverdaemon.restart()
+            else:
+                print(f"Netmuxd is not support arch : {ARCH}")
+
+        elif option == 't':
+            if Netmuxd_is_on:
+                netmuxd.switchTether()
+                altserverdaemon.restart()
+
+        elif option == 'e':
+            altserverdaemon.kill()
+            anisetteserver.kill()
+            if Netmuxd_is_on:
+                netmuxd.kill()
+            break
+
+        elif option == 'h':
+            print(HELP_MSG)
+
+        elif option == 'p':
+            devices = device_manager.getDevices()
+            for d in devices:
+                print(f"{d.name}:{d.UDID}")
+
+        elif option == 'u':
+            print("Not available yet")
+        
+        else:
+            print("Invalid option")
+
+
+HELP_MSG = """
+#####################################
+#  Welcome to the AltServer script  #
+#####################################
+
+ScriptUsage: [OPTION]
 
 OPTIONS
-
-  1, --Install AltStore
-    Install AltStore to your device
-  2, --Install ipa files
-    Install ipa files to your device
-  b, --Back
-    Back to previous script
+    i, --Install AltStore or ipa files
+        Install AltStore or ipa files to your device
+    w, --Switch to wifi Daemode mode (Default using it after launch)
+        Switch and restart to wifi Daemode mode to refresh apps or AltStore
+    t, --Switch to usb tethered Daemode mode
+        Switch and restart to usb tethered Daemode mode to refresh apps or AltStore
+    e, --Exit
+        Exit script
+    h, --Help
+        Show this message
+    p, --Pair
+        Show paired devices
+    u, --Update
+        Update this script
+For more information: 
 """
 
-# Start Script Main
-subprocess.run('idevicepair pair > /dev/null',shell=True)
-RunScriptMain=0
-while RunScriptMain==0 :
-    print(HELP2)
-    option=getAnswer("Enter OPTION to continue :")
-    if option == '1' : # Install-AltStore
-        mainScript=1
-        RunScriptMain=1
-    if option == '2' : # Install-ipa-files
-        mainScript=2
-        RunScriptMain=1
-    if option == 'b' : # Back
-        RunScriptMain=1
-
-if mainScript == 1 :
-    AskAccount()
-    Account=AppleID+','+password
-    CheckAccountCMD='grep %s saved.txt' %Account
-    CheckAccount=subprocess.run(CheckAccountCMD,shell=True)
-    PATH='./AltStore.ipa'
-    AltServer()
-if mainScript == 2 :
-    ipaCheck()
-    if NoIpaFile != 1 :
-        AskAccount()
-        Account=AppleID+','+password
-        CheckAccountCMD='grep %s saved.txt' %Account
-        CheckAccount=subprocess.run(CheckAccountCMD,shell=True)
-        PATH='./%s' %Existipa
-        AltServer()
-if AccountSaving == 1 :
-    SaveAcccount()
-if AccountSaving ==0 :
-    pass
-
-print("<<  Back to AltServer script  >>")
+if __name__ == '__main__':
+    DebugPrint("Script Start")
+    DebugPrint(
+        f"RUNNING AT {CURRENT_DIRECTORY} , RESOURCE_DIR : {RESOURCE_DIRECTORY}")
+    DebugPrint(f"ARCH : {ARCH} , NETMUXD_AVAILABLE : {NETMUXD_IS_AVAILABLE}")
+    main()
