@@ -19,7 +19,7 @@ if ARCH == "armv7l":
     ARCH = "armv7"
 NETMUXD_AVAILABLE_ARCHS = ("x86_64", "aarch64", "armv7")
 NETMUXD_IS_AVAILABLE = ARCH in NETMUXD_AVAILABLE_ARCHS
-Netmuxd_is_on = True if  NETMUXD_IS_AVAILABLE else False
+Netmuxd_is_on = True if NETMUXD_IS_AVAILABLE else False
 
 
 # DIRECTORY
@@ -45,6 +45,9 @@ NETMUXD_URL = f"https://github.com/jkcoxson/netmuxd/releases/download/{NETMUXD_V
 
 ANISETTE_SERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "anisette-server")
 ANISETTE_SERVER_URL = f"https://github.com/Dadoum/Provision/releases/download/{ANISETTE_SERVER_VERSION}/anisette-server-{ARCH}"
+
+SCRIPT_PATH = os.path.join(CURRENT_DIRECTORY, "main.py")
+SCRIPT_URL = "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py"
 
 
 def getAnswer(text):
@@ -103,6 +106,41 @@ def CheckNetworkConnection() -> bool:
         return False
 
 
+def CheckUpdate() -> bool:
+    latest_version = requests.get(
+        "https://github.com/powenn/AltServer-Linux-PyScript/raw/rewrite/version.txt").content.decode().replace('\n', '')
+    if latest_version != SCRIPT_VERSION:
+        print(f"latest version : {latest_version}")
+        print(f"current version : {SCRIPT_VERSION}")
+        msg = """
+++++++++++++++++++++++++
+*                      *
+*   Update available   *
+*                      *
+************************
+        """
+        print(msg)
+        return True
+    return False
+
+
+def Update():
+    if CheckUpdate():
+        answer = getAnswer("Update available, Update now ? (y/n) : ").lower()
+        if answer == 'y':
+            print("Downloading the lastest script")
+            response = requests.get(
+                "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py")
+            open(SCRIPT_PATH, "wb").write(response.content)
+            print("Update done")
+            print("If resouce files need to update, remove them and you will get new one")
+            print(
+                "You can find update log in https://github.com/powenn/AltServer-Linux-PyScript/releases")
+            print("Please exit and restart the script using -e option")
+    else:
+        print("You are using the latest version")
+
+
 class AnisetteServer:
     def __init__(self, host=ANISETTE_HOST, port=ANISETTE_PORT):
         self.host = host
@@ -110,10 +148,12 @@ class AnisetteServer:
         os.environ["ALTSERVER_ANISETTE_SERVER"] = f"http://{host}:{port}"
         DebugPrint(os.environ["ALTSERVER_ANISETTE_SERVER"])
         DebugPrint(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}")
-        self.server = subprocess.Popen(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}", shell=True)#,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+        self.server = subprocess.Popen(
+            f"{ANISETTE_SERVER_PATH} -n {host} -p {port}", shell=True, stdout=subprocess.DEVNULL, stderr=subprocess.STDOUT)
 
     def kill(self):
         print(subprocess.getoutput("killall anisette-server"))
+
 
 class AltServerDaemon:
     def __init__(self, Anisette_Server: AnisetteServer):
@@ -121,7 +161,8 @@ class AltServerDaemon:
         self.start()
 
     def start(self):
-        self.altserver = subprocess.Popen(ALTSERVER_PATH,shell=True)#,env=os.environ)
+        self.altserver = subprocess.Popen(
+            ALTSERVER_PATH, shell=True)  # ,env=os.environ)
 
     def kill(self):
         print(subprocess.getoutput("killall AltServer"))
@@ -130,15 +171,17 @@ class AltServerDaemon:
         self.kill()
         self.start()
 
+
 class Netmuxd:
     def __init__(self):
-        if Netmuxd_is_on :
-            if subprocess.getoutput("echo $(pidof usbmuxd)")!="" :
+        if Netmuxd_is_on:
+            if subprocess.getoutput("echo $(pidof usbmuxd)") != "":
                 print(subprocess.getoutput("sudo kill -9 $(pidof usbmuxd)"))
             self.start()
 
     def start(self):
-        self.netmuxd = subprocess.Popen(f"sudo -b {NETMUXD_PATH}",shell=True)
+        self.netmuxd = subprocess.Popen(f"sudo -b {NETMUXD_PATH}", shell=True)
+
     def kill(self):
         print(subprocess.getoutput("sudo killall netmuxd"))
 
@@ -152,17 +195,19 @@ class Netmuxd:
 
     def switchTether(self):
         global Netmuxd_is_on
-        Netmuxd_is_on=False
+        Netmuxd_is_on = False
         DebugPrint(f"NETMUXD : {Netmuxd_is_on}")
         print(subprocess.getoutput("sudo usbmuxd"))
         self.kill()
+
 
 def getSUDO():
     output = ""
     password = ""
     while output[:-1] != "0000":
         password = getpass.getpass("Enter sudo password : ")
-        p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, text=True,shell=True)
+        p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE,
+                             stderr=subprocess.PIPE, stdout=subprocess.PIPE, text=True, shell=True)
         prompt = p.communicate(password + '\n')
         output = prompt[0]
     DebugPrint(output[:-1])
@@ -170,37 +215,40 @@ def getSUDO():
 
 class iDevice:
     def __init__(self, name, UDID):
-      self.name = name
-      self.UDID = UDID
+        self.name = name
+        self.UDID = UDID
 
 
 class DeviceManager:
-    def __init__(self,devices=[]):
+    def __init__(self, devices=[]):
         self.devices = devices
 
     def getDevices(self) -> list[iDevice]:
         DebugPrint(f"NETMUXD : {Netmuxd_is_on}")
         self.devices = []
-        udids = subprocess.getoutput("idevice_id -n").split('\n') if Netmuxd_is_on else subprocess.getoutput("idevice_id -l").split('\n')
+        udids = subprocess.getoutput("idevice_id -n").split(
+            '\n') if Netmuxd_is_on else subprocess.getoutput("idevice_id -l").split('\n')
         DebugPrint(udids)
         if udids == ['']:
             print("No devices found")
-        else :
+        else:
             for udid in udids:
-                name = subprocess.getoutput(f"ideviceinfo -n -u {udid} -k DeviceName") if Netmuxd_is_on else subprocess.getoutput(f"ideviceinfo -u {udid} -k DeviceName")
-                d = iDevice(name=name,UDID=udid)
+                name = subprocess.getoutput(
+                    f"ideviceinfo -n -u {udid} -k DeviceName") if Netmuxd_is_on else subprocess.getoutput(f"ideviceinfo -u {udid} -k DeviceName")
+                d = iDevice(name=name, UDID=udid)
                 self.devices.append(d)
-        return self.devices 
+        return self.devices
 
-        
+
 class InstallationManager:
     def __init__(self):
         pass
 
-    def selectDevice(self,devices:list[iDevice]):
+    def selectDevice(self, devices: list[iDevice]):
         for i in range(len(devices)):
             print(f"[{i}] : {devices[i].name} , {devices[i].UDID}")
-        index = int(getAnswer("Enter the index of the device for installation : "))
+        index = int(
+            getAnswer("Enter the index of the device for installation : "))
         self.selectedDevice = devices[index]
 
     def getAccount(self):
@@ -212,25 +260,26 @@ class InstallationManager:
         self.password = pd
 
     def selectFile(self):
-        answer  = getAnswer("Do you want to install AltStore ? (y/n) [n for select your own iPA] : ").lower()
+        answer = getAnswer(
+            "Do you want to install AltStore ? (y/n) [n for select your own iPA] : ").lower()
         if answer == 'n':
             self.filePath = getAnswer("Enter the absolute path of the file : ")
-        else :
+        else:
             self.filePath = ALTSTORE_PATH
-        
+
     def run(self):
-        subprocess.run(f"{ALTSERVER_PATH} -u {self.selectedDevice.UDID} -a {self.account} -p {self.password} {self.filePath}",shell=True)
+        subprocess.run(
+            f"{ALTSERVER_PATH} -u {self.selectedDevice.UDID} -a {self.account} -p {self.password} {self.filePath}", shell=True)
 
-
-    def getInfo(self)->str:
-        return [self.selectedDevice.name,self.account,self.password,self.filePath]
-
+    def getInfo(self) -> str:
+        return [self.selectedDevice.name, self.account, self.password, self.filePath]
 
 
 def main():
     if CheckNetworkConnection() == False:
         print("Please connect to network and re-run the script")
         exit(-1)
+    CheckUpdate()
     CheckResource()
     if NETMUXD_IS_AVAILABLE:
         getSUDO()
@@ -282,8 +331,8 @@ def main():
                 print(f"{d.name}:{d.UDID}")
 
         elif option == 'u':
-            print("Not available yet")
-        
+            Update()
+
         else:
             print("Invalid option")
 
