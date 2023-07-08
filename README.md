@@ -37,6 +37,12 @@ Check the two service, if not enable or running , then start
 
 `systemctl start avahi-daemon.socket`
 
+**To run automatically on boot `use *enable*`**
+
+`systemctl enable avahi-daemon.service`
+
+`systemctl enable avahi-daemon.socket`
+
 ## Getting start
 
 `apt setup dependencies`
