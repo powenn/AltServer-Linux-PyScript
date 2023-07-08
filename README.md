@@ -2,7 +2,7 @@
 
 ## About the script 
 
-It's just a simple script to make the operation of AltServer-Linux more easier with cli,now inclides features below
+It's a script to make the operation of AltServer-Linux more easier so you could sideloading with linux simply
 
 ## Features
 
@@ -10,6 +10,7 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 - [x] WiFi Installation
 - [x] Tethered Refreshing
 - [x] Tethered Installation
+- [x] Install your own iPA file by enter the absolute path
 - [x] Updating
 
 
