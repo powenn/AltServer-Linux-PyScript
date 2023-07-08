@@ -156,8 +156,7 @@ class AnisetteServer:
 
 
 class AltServerDaemon:
-    def __init__(self, Anisette_Server: AnisetteServer):
-        self.Anisette_Server = Anisette_Server
+    def __init__(self):
         self.start()
 
     def start(self):
@@ -285,7 +284,7 @@ def main():
         getSUDO()
     anisetteserver = AnisetteServer()
     netmuxd = Netmuxd()
-    altserverdaemon = AltServerDaemon(anisetteserver)
+    altserverdaemon = AltServerDaemon()
     device_manager = DeviceManager()
     installaion_manager = InstallationManager()
     print(HELP_MSG)
