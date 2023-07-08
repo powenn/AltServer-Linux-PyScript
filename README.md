@@ -4,7 +4,7 @@
 
 It's a script to make the operation of AltServer-Linux more easier so you could sideloading with linux simply
 
-## Features
+# Features
 
 - [x] WiFi Refreshing
 - [x] WiFi Installation
@@ -13,6 +13,15 @@ It's a script to make the operation of AltServer-Linux more easier so you could 
 - [x] Install your own iPA file by enter the absolute path
 - [x] Updating
 
+# Getting start
+
+`apt setup dependencies`
+```
+sudo apt-get install usbmuxd libimobiledevice6 libimobiledevice-utils
+```
+```
+sudo apt-get install wget curl libavahi-compat-libdnssd-dev
+```
 
 # Usage
 
@@ -43,16 +52,6 @@ Check the two service, if not enable or running , then start
 `systemctl enable avahi-daemon.service`
 
 `systemctl enable avahi-daemon.socket`
-
-## Getting start
-
-`apt setup dependencies`
-```
-sudo apt-get install usbmuxd libimobiledevice6 libimobiledevice-utils
-```
-```
-sudo apt-get install wget curl libavahi-compat-libdnssd-dev
-```
 
 # Credits
 
