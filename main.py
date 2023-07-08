@@ -304,9 +304,10 @@ def main():
             installaion_manager.run()
 
         elif option == 'w':
-            if Netmuxd_is_on:
-                netmuxd.switchWiFi()
-                altserverdaemon.restart()
+            if NETMUXD_IS_AVAILABLE:
+                if not Netmuxd_is_on:
+                    netmuxd.switchWiFi()
+                    altserverdaemon.restart()
             else:
                 print(f"Netmuxd is not support arch : {ARCH}")
 
