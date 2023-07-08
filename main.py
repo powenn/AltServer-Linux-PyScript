@@ -31,6 +31,7 @@ ALTSERVER_VERSION = "v0.0.5"
 ALTSTORE_VERSION = "1_6_3"
 NETMUXD_VERSION = "v0.1.4"
 ANISETTE_SERVER_VERSION = "2.1.0"
+SCRIPT_VERSION = "0.1"
 
 # PATH AND URL
 ALTSERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "AltServer")
@@ -109,7 +110,7 @@ class AnisetteServer:
         os.environ["ALTSERVER_ANISETTE_SERVER"] = f"http://{host}:{port}"
         DebugPrint(os.environ["ALTSERVER_ANISETTE_SERVER"])
         DebugPrint(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}")
-        self.server = subprocess.Popen(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}", shell=True,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
+        self.server = subprocess.Popen(f"{ANISETTE_SERVER_PATH} -n {host} -p {port}", shell=True)#,stdout=subprocess.DEVNULL,stderr=subprocess.STDOUT)
 
     def kill(self):
         print(subprocess.getoutput("killall anisette-server"))
@@ -160,7 +161,7 @@ def getSUDO():
     output = ""
     password = ""
     while output[:-1] != "0000":
-        password = getAnswer("Enter sudo password : ")
+        password = getpass.getpass("Enter sudo password : ")
         p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE, stderr=subprocess.PIPE, stdout=subprocess.PIPE, text=True,shell=True)
         prompt = p.communicate(password + '\n')
         output = prompt[0]
