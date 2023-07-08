@@ -114,10 +114,10 @@ def CheckUpdate() -> bool:
         print(f"current version : {SCRIPT_VERSION}")
         msg = """
 ++++++++++++++++++++++++
-*                      *
-*   Update available   *
-*                      *
-************************
++                      +
++   Update available   +
++                      +
+++++++++++++++++++++++++
         """
         print(msg)
         return True
