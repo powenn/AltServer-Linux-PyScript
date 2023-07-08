@@ -359,7 +359,10 @@ OPTIONS
         Show paired devices
     u, --Update
         Update this script
+        
 For more information: 
+https://github.com/powenn/AltServer-Linux-PyScript
+
 """
 
 if __name__ == '__main__':
