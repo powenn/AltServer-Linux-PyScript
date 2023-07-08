@@ -11,7 +11,7 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 - [x] WiFi Installation
 - [x] Tethered Refreshing
 - [x] Tethered Installation
-- [ ] Updating (in progress)
+- [x] Updating
 
 
 # Usage
