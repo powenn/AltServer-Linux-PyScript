@@ -15,6 +15,8 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 
 
 # Usage
+
+`curl https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py > main.py`
 `python3 main.py`
 
 ## Getting start
