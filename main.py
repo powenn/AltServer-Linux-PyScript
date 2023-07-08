@@ -304,7 +304,7 @@ def main():
             installaion_manager.run()
 
         elif option == 'w':
-            if NETMUXD_IS_AVAILABLE:
+            if Netmuxd_is_on:
                 netmuxd.switchWiFi()
                 altserverdaemon.restart()
             else:
