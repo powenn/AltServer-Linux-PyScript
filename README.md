@@ -6,7 +6,7 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 
 ## Features
 
-- [ ] WiFi Refreshing (currently not working, figuring the problem)
+- [x] WiFi Refreshing
 - [x] WiFi Installation
 - [x] Tethered Refreshing
 - [x] Tethered Installation
@@ -18,6 +18,24 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 `curl https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py > main.py`
 
 `python3 main.py`
+
+**If WiFi refreshing not working**
+
+Check the two service, if not enable or running , then start
+
+`avahi-daemon.service` and `avahi-daemon.socket`
+
+**Check status**
+
+`systemctl status avahi-daemon.service`
+
+`systemctl status avahi-daemon.socket`
+
+**Start**
+
+`systemctl start avahi-daemon.service`
+
+`systemctl start avahi-daemon.socket`
 
 ## Getting start
 
@@ -36,3 +54,5 @@ sudo apt-get install wget curl libavahi-compat-libdnssd-dev
 [jkcoxson](https://github.com/jkcoxson) for [netmuxd](https://github.com/jkcoxson/netmuxd)
 
 [Dadoum](https://github.com/Dadoum) for [Provision](https://github.com/Dadoum/Provision)
+
+[Macley](https://github.com/Macleykun) for testing and figure out avahi-daemon issue
