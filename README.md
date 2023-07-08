@@ -17,6 +17,7 @@ It's just a simple script to make the operation of AltServer-Linux more easier w
 # Usage
 
 `curl https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py > main.py`
+
 `python3 main.py`
 
 ## Getting start
@@ -31,4 +32,8 @@ sudo apt-get install wget curl libavahi-compat-libdnssd-dev
 
 # Credits
 
-Editing...
+[NyaMisty](https://github.com/NyaMisty) for [AltServer-Linux](https://github.com/NyaMisty/AltServer-Linux)
+
+[jkcoxson](https://github.com/jkcoxson) for [netmuxd](https://github.com/jkcoxson/netmuxd)
+
+[Dadoum](https://github.com/Dadoum) for [Provision](https://github.com/Dadoum/Provision)
