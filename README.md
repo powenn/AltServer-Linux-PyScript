@@ -53,6 +53,24 @@ Check the two service, if not enable or running , then start
 
 `systemctl enable avahi-daemon.socket`
 
+# Want to use it as an app ?
+
+![Screenshot](https://github.com/powenn/AltServer-Linux-PyScript/blob/rewrite/Images/01.png)
+
+`curl https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/AltServer.desktop > AltServer.desktop`
+
+You might want to give it an app icon  
+I am using `https://altstore.io/images/AltStore_AppIcon-p-500.png` as app icon  
+download the image and edit the desktop file  
+set  
+`Icon=THE_ABSOLUTE_PATH_OF_THE_IMAGE`  
+set  
+`Path=THE_DIR_WHICH_CONTAINS_THE_PYTHON_SCRIPT`
+then  
+`sudo cp 'THE_DESKTOP_ENTRY_FILE' '/usr/share/applications/AltServer.desktop'`
+
+[Demo video](https://github.com/powenn/AltServer-Linux-PyScript/discussions/7)
+
 # Credits
 
 [NyaMisty](https://github.com/NyaMisty) for [AltServer-Linux](https://github.com/NyaMisty/AltServer-Linux)
