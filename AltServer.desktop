@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=AltServer
+Comment=Sideloading wtih Linux :)
+Exec=python3 main.py
+Icon=APPICON_FILE
+Path=THE_DIR_WHICH_CONTAINS_THE_PYTHON_SCRIPT
+Terminal=true
+StartupNotify=false
+
+# https://altstore.io/images/AltStore_AppIcon-p-500.png
+# Add to /usr/share/applications as an app 
+# sudo cp 'THE_DESKTOP_ENTRY_FILE' '/usr/share/applications/AltServer.desktop'
