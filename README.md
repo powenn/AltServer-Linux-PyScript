@@ -61,11 +61,12 @@ Check the two service, if not enable or running , then start
 
 You might want to give it an app icon  
 I am using `https://altstore.io/images/AltStore_AppIcon-p-500.png` as app icon  
-download the image and edit the desktop file  
+download the image and edit the desktop file
+
 set  
 `Icon=THE_ABSOLUTE_PATH_OF_THE_IMAGE`  
 set  
-`Path=THE_DIR_WHICH_CONTAINS_THE_PYTHON_SCRIPT`
+`Path=THE_DIR_WHICH_CONTAINS_THE_PYTHON_SCRIPT`  
 then  
 `sudo cp 'THE_DESKTOP_ENTRY_FILE' '/usr/share/applications/AltServer.desktop'`
 
