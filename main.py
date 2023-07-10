@@ -31,7 +31,7 @@ ALTSERVER_VERSION = "v0.0.5"
 ALTSTORE_VERSION = "1_6_3"
 NETMUXD_VERSION = "v0.1.4"
 ANISETTE_SERVER_VERSION = "2.1.0"
-SCRIPT_VERSION = "0.1"
+SCRIPT_VERSION = "0.1.1"
 
 # PATH AND URL
 ALTSERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "AltServer")
@@ -246,9 +246,13 @@ class InstallationManager:
     def selectDevice(self, devices: list[iDevice]):
         for i in range(len(devices)):
             print(f"[{i}] : {devices[i].name} , {devices[i].UDID}")
-        index = int(
-            getAnswer("Enter the index of the device for installation : "))
-        self.selectedDevice = devices[index]
+        try:
+            index = int(
+                getAnswer("Enter the index of the device for installation : "))
+            self.selectedDevice = devices[index]
+        except:
+            print("Invalid index")
+            self.selectedDevice = None
 
     def getAccount(self):
         ac = getAnswer("Enter your Apple ID : ")
@@ -257,12 +261,13 @@ class InstallationManager:
     def getPassword(self):
         pd = getpass.getpass("Enter password of the Apple ID : ")
         self.password = pd
-
+        
     def selectFile(self):
         answer = getAnswer(
             "Do you want to install AltStore ? (y/n) [n for select your own iPA] : ").lower()
         if answer == 'n':
-            self.filePath = getAnswer("Enter the absolute path of the file : ")
+            filePath = getAnswer("Enter the absolute path of the file : ")
+            self.filePath = filePath if filePath != "" else self.selectFile()
         else:
             self.filePath = ALTSTORE_PATH
 
@@ -296,6 +301,8 @@ def main():
             if len(devices) == 0:
                 continue
             installaion_manager.selectDevice(devices=devices)
+            if installaion_manager.selectedDevice == None:
+                continue
             installaion_manager.getAccount()
             installaion_manager.getPassword()
             installaion_manager.selectFile()
@@ -328,7 +335,7 @@ def main():
         elif option == 'p':
             devices = device_manager.getDevices()
             for d in devices:
-                print(f"{d.name}:{d.UDID}")
+                print(f"{d.name} , {d.UDID}")
 
         elif option == 'u':
             Update()
@@ -371,3 +378,4 @@ if __name__ == '__main__':
         f"RUNNING AT {CURRENT_DIRECTORY} , RESOURCE_DIR : {RESOURCE_DIRECTORY}")
     DebugPrint(f"ARCH : {ARCH} , NETMUXD_AVAILABLE : {NETMUXD_IS_AVAILABLE}")
     main()
+    
