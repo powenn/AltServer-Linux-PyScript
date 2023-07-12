@@ -31,7 +31,7 @@ ALTSERVER_VERSION = "v0.0.5"
 ALTSTORE_VERSION = "1_6_3"
 NETMUXD_VERSION = "v0.1.4"
 ANISETTE_SERVER_VERSION = "2.1.0"
-SCRIPT_VERSION = "0.1.1"
+SCRIPT_VERSION = "0.1.2"
 
 # PATH AND URL
 ALTSERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "AltServer")
@@ -261,13 +261,17 @@ class InstallationManager:
     def getPassword(self):
         pd = getpass.getpass("Enter password of the Apple ID : ")
         self.password = pd
-        
+
     def selectFile(self):
         answer = getAnswer(
             "Do you want to install AltStore ? (y/n) [n for select your own iPA] : ").lower()
         if answer == 'n':
             filePath = getAnswer("Enter the absolute path of the file : ")
-            self.filePath = filePath if filePath != "" else self.selectFile()
+            if filePath != "":
+                self.filePath = filePath
+            else:
+                self.filePath = None
+                print("No file path entered")
         else:
             self.filePath = ALTSTORE_PATH
 
@@ -306,6 +310,8 @@ def main():
             installaion_manager.getAccount()
             installaion_manager.getPassword()
             installaion_manager.selectFile()
+            if installaion_manager.filePath == None:
+                continue
             DebugPrint(installaion_manager.getInfo())
             installaion_manager.run()
 
@@ -378,4 +384,3 @@ if __name__ == '__main__':
         f"RUNNING AT {CURRENT_DIRECTORY} , RESOURCE_DIR : {RESOURCE_DIRECTORY}")
     DebugPrint(f"ARCH : {ARCH} , NETMUXD_AVAILABLE : {NETMUXD_IS_AVAILABLE}")
     main()
-    
