@@ -47,7 +47,7 @@ Check the two services, if they aren't up and running, then these commands down 
 
 `systemctl start avahi-daemon.socket`
 
-**To run automatically on boot use the `*enable* `command**
+**To run automatically on boot use the *enable* command**
 
 `systemctl enable avahi-daemon.service`
 
