@@ -2,7 +2,7 @@
 
 ## About the script 
 
-It's a script to make the operation of AltServer-Linux more easier so you could sideloading with linux simply
+It's a script to make the operation of AltServer-Linux easier so you could sideload with Linux easyily
 
 # Features
 
@@ -10,7 +10,7 @@ It's a script to make the operation of AltServer-Linux more easier so you could 
 - [x] WiFi Installation
 - [x] Tethered Refreshing
 - [x] Tethered Installation
-- [x] Install your own iPA file by enter the absolute path
+- [x] Install your own iPA file by entering the absolute path
 - [x] Updating
 
 # Getting start
@@ -29,13 +29,13 @@ sudo apt-get install wget curl libavahi-compat-libdnssd-dev
 
 `python3 main.py`
 
-**If WiFi refreshing not working**
+**If WiFi refreshing is not working**
 
-Check the two service, if not enable or running , then start
+Check the two services, if they aren't up and running, then these commands down below will start them
 
 `avahi-daemon.service` and `avahi-daemon.socket`
 
-**Check status**
+**Check the status**
 
 `systemctl status avahi-daemon.service`
 
@@ -47,13 +47,13 @@ Check the two service, if not enable or running , then start
 
 `systemctl start avahi-daemon.socket`
 
-**To run automatically on boot `use *enable*`**
+**To run automatically on boot use the `*enable* `command**
 
 `systemctl enable avahi-daemon.service`
 
 `systemctl enable avahi-daemon.socket`
 
-# Want to use it as an app ?
+# Want to use it as an app?
 
 ![Screenshot](https://github.com/powenn/AltServer-Linux-PyScript/blob/rewrite/Images/01.png)
 
