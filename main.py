@@ -142,6 +142,7 @@ def CheckResource():
     if Resource_Missed and not Version_Fetched:
         latest_version_json: dict = FetchVersion()
 
+    global current_version_json
     current_version_json = json.load(open(VERSION_JSON_PATH))
     # Resource dir
     if not os.path.exists(RESOURCE_DIRECTORY):
@@ -258,13 +259,19 @@ def Update():
     if CheckUpdate():
         answer = getAnswer("Update available, Update now ? (y/n) : ").lower()
         if answer == 'y':
+            # Remove outdated resource
             print("Removing outdated resource ...")
             RemoveOutdatedResource()
+            # Update script
             if Script_Is_Updatable:
                 print("Downloading the lastest script ...")
                 response = requests.get(
                     "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py")
                 open(SCRIPT_PATH, "wb").write(response.content)
+                current_version_json["Script"] = Latest_Script_Version
+                with open(VERSION_JSON_PATH, "w") as outfile:
+                    json.dump(current_version_json, outfile)
+
             print("\n\nUpdate done\nYou can find update log in https://github.com/powenn/AltServer-Linux-PyScript/releases\nScript requires restart to apply updates\nUse `e` option to exit the script\n\n")
     else:
         print("All resources and script are up to dated :)")
