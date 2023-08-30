@@ -1,4 +1,6 @@
 import os
+import json
+import shutil
 import getpass
 import datetime
 import platform
@@ -7,7 +9,6 @@ import subprocess
 
 DEBUGGING = False
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
-
 
 # ANISETTE-SERVER
 ANISETTE_HOST = "127.0.0.1"
@@ -27,27 +28,48 @@ CURRENT_DIRECTORY = os.path.dirname(os.path.realpath(__file__))
 RESOURCE_DIRECTORY = os.path.join(CURRENT_DIRECTORY, "resource")
 
 # VERSIONS
-ALTSERVER_VERSION = "v0.0.5"
-ALTSTORE_VERSION = "1_6_3"
-NETMUXD_VERSION = "v0.1.4"
-ANISETTE_SERVER_VERSION = "2.2.0"
-SCRIPT_VERSION = "0.1.3"
+"""
+Versions will be fetch with FetchVersion()
+"""
+Latest_AltServer_Version = ""
+Latest_AltStore_Version = ""
+Latest_Netmuxd_Version = ""
+Latest_Anisette_Server_Version = ""
+Latest_Script_Version = ""
 
 # PATH AND URL
+"""
+URL value default is "" , value will be update with FetchVersion()
+"""
+VERSION_JSON_PATH = os.path.join(CURRENT_DIRECTORY, "version.json")
+
 ALTSERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "AltServer")
-ALTSERVER_URL = f"https://github.com/NyaMisty/AltServer-Linux/releases/download/{ALTSERVER_VERSION}/AltServer-{ARCH}"
+Altserver_URL = ""
 
 ALTSTORE_PATH = os.path.join(RESOURCE_DIRECTORY, "AltStore.ipa")
-ALTSTORE_URL = f"https://cdn.altstore.io/file/altstore/apps/altstore/{ALTSTORE_VERSION}.ipa"
+AltStore_URL = ""
 
 NETMUXD_PATH = os.path.join(RESOURCE_DIRECTORY, "netmuxd")
-NETMUXD_URL = f"https://github.com/jkcoxson/netmuxd/releases/download/{NETMUXD_VERSION}/{ARCH}-linux-netmuxd"
+Netmuxd_URL = ""
 
 ANISETTE_SERVER_PATH = os.path.join(RESOURCE_DIRECTORY, "anisette-server")
-ANISETTE_SERVER_URL = f"https://github.com/Dadoum/Provision/releases/download/{ANISETTE_SERVER_VERSION}/anisette-server-{ARCH}"
+Anisette_Server_URL = ""
 
 SCRIPT_PATH = os.path.join(CURRENT_DIRECTORY, "main.py")
 SCRIPT_URL = "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py"
+
+# UPDATABLE BOOLS
+"""
+Default is false , value will be update with CheckUpdate()
+"""
+AltServer_Is_Updatable = False
+AltStore_Is_Updatable = False
+Nermuxd_Is_Updatable = False
+Anisette_Server_Is_Updatable = False
+Script_Is_Updatable = False
+
+
+Version_Fetched = False
 
 
 def getAnswer(text):
@@ -64,31 +86,104 @@ def DebugPrint(msg):
         print(f"[DEBUG] {now}\n== {msg} ==")
 
 
+def FetchVersion() -> dict:
+    print("Fetching version ...")
+
+    global Latest_AltServer_Version, Latest_AltStore_Version, Latest_Anisette_Server_Version, Latest_Netmuxd_Version, Latest_Script_Version
+
+    AltStore_Response = requests.get(
+        "https://cdn.altstore.io/file/altstore/apps.json").json()["apps"][0]["versions"][0]
+    Latest_AltStore_Version = AltStore_Response["version"]
+
+    Latest_AltServer_Version = requests.get(
+        "https://api.github.com/repos/NyaMisty/AltServer-Linux/releases/latest").json()["tag_name"]
+    Latest_Netmuxd_Version = requests.get(
+        "https://api.github.com/repos/jkcoxson/netmuxd/releases/latest").json()["tag_name"]
+    Latest_Anisette_Server_Version = requests.get(
+        "https://api.github.com/repos/Dadoum/Provision/releases/latest").json()["tag_name"]
+    Latest_Script_Version = requests.get(
+        "https://api.github.com/repos/powenn/AltServer-Linux-PyScript/releases/latest").json()["tag_name"]
+
+    global Altserver_URL, AltStore_URL, Netmuxd_URL, Anisette_Server_URL, Version_Fetched
+
+    Altserver_URL = f"https://github.com/NyaMisty/AltServer-Linux/releases/download/{Latest_AltServer_Version}/AltServer-{ARCH}"
+    Netmuxd_URL = f"https://github.com/jkcoxson/netmuxd/releases/download/{Latest_Netmuxd_Version}/{ARCH}-linux-netmuxd"
+    Anisette_Server_URL = f"https://github.com/Dadoum/Provision/releases/download/{Latest_Anisette_Server_Version}/anisette-server-{ARCH}"
+    AltStore_URL = AltStore_Response["downloadURL"]
+
+    Version_Fetched = True
+
+    print("Done")
+    json_data = {"AltServer": Latest_AltServer_Version, "AltStore": Latest_AltStore_Version, "Netmuxd": Latest_Netmuxd_Version,
+                 "Anisette-Server": Latest_Anisette_Server_Version, "Script": Latest_Script_Version}
+    DebugPrint(json_data)
+    return json_data
+
+
 def CheckResource():
+    resource_list = os.listdir(RESOURCE_DIRECTORY) if os.path.exists(
+        RESOURCE_DIRECTORY) else []
+    Resource_Missed = not all(resource in resource_list for resource in [
+                              'AltServer', 'anisette-server', 'AltStore.ipa', 'netmuxd'])
+    latest_version_json = {}
+
+    DebugPrint(f"RESOURCE_MISSED : {Resource_Missed}")
+
+    if not os.path.exists(VERSION_JSON_PATH):
+        print("version.json not exists")
+        latest_version_json: dict = FetchVersion()
+        DebugPrint(latest_version_json)
+        with open(VERSION_JSON_PATH, "w") as outfile:
+            json.dump(latest_version_json, outfile)
+        # Remove all executable binaries to get new binaries
+        if os.path.exists(RESOURCE_DIRECTORY):
+            shutil.rmtree(RESOURCE_DIRECTORY)
+
+    if Resource_Missed and not Version_Fetched:
+        latest_version_json: dict = FetchVersion()
+
+    current_version_json = json.load(open(VERSION_JSON_PATH))
+    # Resource dir
     if not os.path.exists(RESOURCE_DIRECTORY):
         print("Creating 'resource' directory")
         os.mkdir(RESOURCE_DIRECTORY)
+    # AltServer
     if not os.path.exists(ALTSERVER_PATH):
-        print("Downloading Altserver")
-        response = requests.get(ALTSERVER_URL)
+        print(f"Downloading Altserver {Latest_AltServer_Version}")
+        DebugPrint(Altserver_URL)
+        response = requests.get(Altserver_URL)
         open(ALTSERVER_PATH, "wb").write(response.content)
+        current_version_json["AltServer"] = Latest_AltServer_Version
+    # AltStore
     if not os.path.exists(ALTSTORE_PATH):
-        print("Downloading AltStore ipa")
-        response = requests.get(ALTSTORE_URL)
+        print(f"Downloading AltStore ipa {Latest_AltStore_Version}")
+        DebugPrint(AltStore_URL)
+        response = requests.get(AltStore_URL)
         open(ALTSTORE_PATH, "wb").write(response.content)
+        current_version_json["AltStore"] = Latest_AltStore_Version
+    # Netmuxd
     if not os.path.exists(NETMUXD_PATH) and NETMUXD_IS_AVAILABLE:
-        print("Downloading netmuxd")
-        response = requests.get(NETMUXD_URL)
+        print(f"Downloading netmuxd {Latest_Netmuxd_Version}")
+        DebugPrint(Netmuxd_URL)
+        response = requests.get(Netmuxd_URL)
         open(NETMUXD_PATH, "wb").write(response.content)
+        current_version_json["Netmuxd"] = Latest_Netmuxd_Version
+    # Anisette-Server
     if not os.path.exists(ANISETTE_SERVER_PATH):
-        print("Downloading anisette-server")
-        response = requests.get(ANISETTE_SERVER_URL)
+        print(f"Downloading anisette-server {Latest_Anisette_Server_Version}")
+        DebugPrint(Anisette_Server_URL)
+        response = requests.get(Anisette_Server_URL)
         open(ANISETTE_SERVER_PATH, "wb").write(response.content)
+        current_version_json["Anisette-Server"] = Latest_Anisette_Server_Version
+
+    # Write updated json data into version.json
+    with open(VERSION_JSON_PATH, "w") as outfile:
+        json.dump(current_version_json, outfile)
 
     if not os.access(ALTSERVER_PATH, os.X_OK):
         print("Setting AltServer exec permission")
         os.chmod(ALTSERVER_PATH, 0o755)
-    if not os.access(NETMUXD_PATH, os.X_OK):
+    if os.path.exists(NETMUXD_PATH) and not os.access(NETMUXD_PATH, os.X_OK):
         print("Setting netmuxd exec permission")
         os.chmod(NETMUXD_PATH, 0o755)
     if not os.access(ANISETTE_SERVER_PATH, os.X_OK):
@@ -107,38 +202,72 @@ def CheckNetworkConnection() -> bool:
 
 
 def CheckUpdate() -> bool:
-    latest_version = requests.get(
-        "https://github.com/powenn/AltServer-Linux-PyScript/raw/rewrite/version.txt").content.decode().replace('\n', '')
-    if latest_version != SCRIPT_VERSION:
-        print(f"latest version : {latest_version}")
-        print(f"current version : {SCRIPT_VERSION}")
-        msg = """
-++++++++++++++++++++++++
-+                      +
-+   Update available   +
-+                      +
-++++++++++++++++++++++++
-        """
-        print(msg)
-        return True
-    return False
+    if not Version_Fetched:
+        FetchVersion()
+    with open(VERSION_JSON_PATH, 'r') as openfile:
+        json_data = json.load(openfile)
+
+    Current_Script_Version = json_data["Script"]
+    Current_AltServer_Version = json_data["AltServer"]
+    Current_AltStore_Version = json_data["AltStore"]
+    Current_Netmuxd_Version = json_data["Netmuxd"]
+    Current_Anisette_Server_Version = json_data["Anisette-Server"]
+
+    global Script_Is_Updatable, AltServer_Is_Updatable, AltStore_Is_Updatable, Nermuxd_Is_Updatable, Anisette_Server_Is_Updatable
+    # script
+    if Latest_Script_Version != Current_Script_Version:
+        Script_Is_Updatable = True
+        print(
+            f"Script is updatable , current ver : {Current_Script_Version} , latest ver : {Latest_Script_Version}")
+    # altserver
+    if Latest_AltServer_Version != Current_AltServer_Version:
+        AltServer_Is_Updatable = True
+        print(
+            f"AltServer is updatable , current ver : {Current_AltServer_Version} , latest ver : {Latest_AltServer_Version}")
+    # altstore
+    if Latest_AltStore_Version != Current_AltStore_Version:
+        AltStore_Is_Updatable = True
+        print(
+            f"AltStrore is updatable , current ver : {Current_AltStore_Version} , latest ver : {Latest_AltStore_Version}")
+    # netmuxd
+    if Latest_Netmuxd_Version != Current_Netmuxd_Version:
+        Nermuxd_Is_Updatable = True
+        print(
+            f"Netmuxd is updatable , current ver : {Current_Netmuxd_Version} , latest ver : {Latest_Netmuxd_Version}")
+    # anisette server
+    if Latest_Anisette_Server_Version != Current_Anisette_Server_Version:
+        Anisette_Server_Is_Updatable = True
+        print(
+            f"Anisette-Server is updatable , current ver : {Current_Anisette_Server_Version} , latest ver : {Latest_Anisette_Server_Version}")
+
+    return AltServer_Is_Updatable or AltStore_Is_Updatable or Nermuxd_Is_Updatable or Anisette_Server_Is_Updatable or Script_Is_Updatable
+
+
+def RemoveOutdatedResource():
+    if AltServer_Is_Updatable:
+        os.remove(ALTSERVER_PATH)
+    if AltStore_Is_Updatable:
+        os.remove(ALTSTORE_PATH)
+    if Anisette_Server_Is_Updatable:
+        os.remove(ANISETTE_SERVER_PATH)
+    if Nermuxd_Is_Updatable:
+        os.remove(NETMUXD_PATH)
 
 
 def Update():
     if CheckUpdate():
         answer = getAnswer("Update available, Update now ? (y/n) : ").lower()
         if answer == 'y':
-            print("Downloading the lastest script")
-            response = requests.get(
-                "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py")
-            open(SCRIPT_PATH, "wb").write(response.content)
-            print("Update done")
-            print("If resouce files need to update, remove them and you will get new one")
-            print(
-                "You can find update log in https://github.com/powenn/AltServer-Linux-PyScript/releases")
-            print("Please exit and restart the script using -e option")
+            print("Removing outdated resource ...")
+            RemoveOutdatedResource()
+            if Script_Is_Updatable:
+                print("Downloading the lastest script ...")
+                response = requests.get(
+                    "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py")
+                open(SCRIPT_PATH, "wb").write(response.content)
+            print("\n\nUpdate done\nYou can find update log in https://github.com/powenn/AltServer-Linux-PyScript/releases\nScript requires restart to apply updates\nUse `e` option to exit the script\n\n")
     else:
-        print("You are using the latest version")
+        print("All resources and script are up to dated :)")
 
 
 class AnisetteServer:
@@ -286,9 +415,10 @@ class InstallationManager:
 def main():
     if CheckNetworkConnection() == False:
         print("Please connect to network and re-run the script")
+        input("Press enter to exit : ")
         exit(-1)
-    CheckUpdate()
     CheckResource()
+    CheckUpdate()
     if NETMUXD_IS_AVAILABLE:
         getSUDO()
     anisetteserver = AnisetteServer()
