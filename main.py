@@ -7,6 +7,11 @@ import platform
 import requests
 import subprocess
 
+
+# Developer settings
+GITHUB_API_TOKEN = ""
+headers = {'Authorization': 'token ' + GITHUB_API_TOKEN}
+CUSTOM_HEADERS_ENABLED = False
 DEBUGGING = False
 TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
@@ -92,17 +97,17 @@ def FetchVersion() -> dict:
     global Latest_AltServer_Version, Latest_AltStore_Version, Latest_Anisette_Server_Version, Latest_Netmuxd_Version, Latest_Script_Version
 
     AltStore_Response = requests.get(
-        "https://cdn.altstore.io/file/altstore/apps.json").json()["apps"][0]["versions"][0]
+        "https://cdn.altstore.io/file/altstore/apps.json", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["apps"][0]["versions"][0]
     Latest_AltStore_Version = AltStore_Response["version"]
 
     Latest_AltServer_Version = requests.get(
-        "https://api.github.com/repos/NyaMisty/AltServer-Linux/releases/latest").json()["tag_name"]
+        "https://api.github.com/repos/NyaMisty/AltServer-Linux/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
     Latest_Netmuxd_Version = requests.get(
-        "https://api.github.com/repos/jkcoxson/netmuxd/releases/latest").json()["tag_name"]
+        "https://api.github.com/repos/jkcoxson/netmuxd/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
     Latest_Anisette_Server_Version = requests.get(
-        "https://api.github.com/repos/Dadoum/Provision/releases/latest").json()["tag_name"]
+        "https://api.github.com/repos/Dadoum/Provision/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
     Latest_Script_Version = requests.get(
-        "https://api.github.com/repos/powenn/AltServer-Linux-PyScript/releases/latest").json()["tag_name"]
+        "https://api.github.com/repos/powenn/AltServer-Linux-PyScript/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
 
     global Altserver_URL, AltStore_URL, Netmuxd_URL, Anisette_Server_URL, Version_Fetched
 
@@ -264,7 +269,8 @@ def Update():
             RemoveOutdatedResource()
             # Update script
             if Script_Is_Updatable:
-                print("Downloading the lastest script ...")
+                print(
+                    f"Downloading the lastest script [{Latest_Script_Version}] ...")
                 response = requests.get(
                     "https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py")
                 open(SCRIPT_PATH, "wb").write(response.content)
