@@ -97,7 +97,7 @@ def FetchVersion() -> dict:
     global Latest_AltServer_Version, Latest_AltStore_Version, Latest_Anisette_Server_Version, Latest_Netmuxd_Version, Latest_Script_Version
 
     AltStore_Response = requests.get(
-        "https://cdn.altstore.io/file/altstore/apps.json", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["apps"][0]["versions"][0]
+        "https://cdn.altstore.io/file/altstore/apps.json").json()["apps"][0]["versions"][0]
     Latest_AltStore_Version = AltStore_Response["version"]
 
     Latest_AltServer_Version = requests.get(
