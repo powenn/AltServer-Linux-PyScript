@@ -11,7 +11,8 @@ It's a script to make the operation of AltServer-Linux easier so you could sidel
 - [x] Tethered Refreshing
 - [x] Tethered Installation
 - [x] Install your own iPA file by entering the absolute path
-- [x] Updating
+- [x] Script Updating
+- [x] Independently Resource Updating
 
 # Getting start
 
