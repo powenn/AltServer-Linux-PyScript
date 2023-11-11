@@ -419,7 +419,7 @@ class InstallationManager:
 
     def run(self):
         subprocess.run(
-            f"{ALTSERVER_PATH} -u {self.selectedDevice.UDID} -a {self.account} -p {self.password} {self.filePath}", shell=True)
+            f"{ALTSERVER_PATH} -u {self.selectedDevice.UDID} -a '{self.account}' -p '{self.password}' {self.filePath}", shell=True)
 
     def getInfo(self) -> str:
         return [self.selectedDevice.name, self.account, self.password, self.filePath]
