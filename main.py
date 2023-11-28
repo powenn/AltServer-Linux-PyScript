@@ -345,13 +345,14 @@ class Netmuxd:
 def getSUDO():
     output = ""
     password = ""
-    while output[:-1] != "0000":
-        password = getpass.getpass("Enter sudo password : ")
-        p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE,
+    if os.geteuid() != 0:
+        while output[:-1] != "0000":
+            password = getpass.getpass("Enter sudo password : ")
+            p = subprocess.Popen("sudo -S echo '0000'", stdin=subprocess.PIPE,
                              stderr=subprocess.PIPE, stdout=subprocess.PIPE, text=True, shell=True)
-        prompt = p.communicate(password + '\n')
-        output = prompt[0]
-    DebugPrint(output[:-1])
+            prompt = p.communicate(password + '\n')
+            output = prompt[0]
+        DebugPrint(output[:-1])
 
 
 class iDevice:
