@@ -24,6 +24,19 @@ sudo apt-get install usbmuxd libimobiledevice6 libimobiledevice-utils
 sudo apt-get install wget curl libavahi-compat-libdnssd-dev
 ```
 
+`Fedora setup dependencies`
+```
+sudo dnf install python3-requests usbmuxd libimobiledevice-utils avahi-compat-libdns_sd-devel
+```
+
+`libimobiledevice-utils` provides `idevice_id`, `ideviceinfo`, and `idevicepair`.
+The Avahi development package provides the unversioned `libdns_sd.so` loaded by
+AltServer. Connect and unlock your device, accept the Trust prompt, and run
+`idevicepair pair` if pairing is needed.
+
+These packages address local dependencies; Apple account authentication and the
+Anisette server have separate compatibility requirements.
+
 # Usage
 
 `curl https://raw.githubusercontent.com/powenn/AltServer-Linux-PyScript/rewrite/main.py > main.py`

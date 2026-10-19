@@ -6,6 +6,8 @@ import datetime
 import platform
 import requests
 import subprocess
+import io
+import tarfile
 
 
 # Developer settings
@@ -102,8 +104,11 @@ def FetchVersion() -> dict:
 
     Latest_AltServer_Version = requests.get(
         "https://api.github.com/repos/NyaMisty/AltServer-Linux/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
-    Latest_Netmuxd_Version = requests.get(
-        "https://api.github.com/repos/jkcoxson/netmuxd/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
+    Netmuxd_Response = requests.get(
+        "https://api.github.com/repos/jkcoxson/netmuxd/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "")
+    Netmuxd_Response.raise_for_status()
+    Netmuxd_Release = Netmuxd_Response.json()
+    Latest_Netmuxd_Version = Netmuxd_Release["tag_name"]
     Latest_Anisette_Server_Version = requests.get(
         "https://api.github.com/repos/Dadoum/Provision/releases/latest", headers=headers if CUSTOM_HEADERS_ENABLED else "").json()["tag_name"]
     Latest_Script_Version = requests.get(
@@ -112,7 +117,15 @@ def FetchVersion() -> dict:
     global Altserver_URL, AltStore_URL, Netmuxd_URL, Anisette_Server_URL, Version_Fetched
 
     Altserver_URL = f"https://github.com/NyaMisty/AltServer-Linux/releases/download/{Latest_AltServer_Version}/AltServer-{ARCH}"
-    Netmuxd_URL = f"https://github.com/jkcoxson/netmuxd/releases/download/{Latest_Netmuxd_Version}/{ARCH}-linux-netmuxd"
+    global NETMUXD_IS_AVAILABLE, Netmuxd_is_on
+    asset_names = (f"netmuxd-{ARCH}-unknown-linux-gnu.tar.gz", f"{ARCH}-linux-netmuxd")
+    asset = next((asset for asset in Netmuxd_Release["assets"]
+                  if asset["name"] in asset_names), None)
+    Netmuxd_URL = asset["browser_download_url"] if asset else ""
+    if NETMUXD_IS_AVAILABLE and asset is None:
+        print(f"No netmuxd release asset for {ARCH}; using USB tethered mode")
+        NETMUXD_IS_AVAILABLE = False
+        Netmuxd_is_on = False
     Anisette_Server_URL = f"https://github.com/Dadoum/Provision/releases/download/{Latest_Anisette_Server_Version}/anisette-server-{ARCH}"
     AltStore_URL = AltStore_Response["downloadURL"]
 
@@ -125,11 +138,43 @@ def FetchVersion() -> dict:
     return json_data
 
 
+def IsValidResource(path):
+    if not os.path.isfile(path):
+        return False
+    expected = b"PK" if path == ALTSTORE_PATH else b"\x7fELF"
+    with open(path, "rb") as resource:
+        return resource.read(len(expected)) == expected
+
+
+def DownloadResource(url, path):
+    response = requests.get(url, timeout=120)
+    response.raise_for_status()
+    data = response.content
+    if path == NETMUXD_PATH and url.endswith(".tar.gz"):
+        with tarfile.open(fileobj=io.BytesIO(data), mode="r:gz") as archive:
+            members = [member for member in archive.getmembers()
+                       if member.isfile() and os.path.basename(member.name) == "netmuxd"]
+            if len(members) != 1:
+                raise ValueError("Expected one netmuxd executable in the release archive")
+            data = archive.extractfile(members[0]).read()
+    expected = b"PK" if path == ALTSTORE_PATH else b"\x7fELF"
+    if not data.startswith(expected):
+        raise ValueError(f"Invalid resource download: {os.path.basename(path)}")
+    temporary = path + ".part"
+    try:
+        with open(temporary, "wb") as output:
+            output.write(data)
+        os.replace(temporary, path)
+    finally:
+        if os.path.exists(temporary):
+            os.remove(temporary)
+
+
 def CheckResource():
-    resource_list = os.listdir(RESOURCE_DIRECTORY) if os.path.exists(
-        RESOURCE_DIRECTORY) else []
-    Resource_Missed = not all(resource in resource_list for resource in [
-                              'AltServer', 'anisette-server', 'AltStore.ipa', 'netmuxd'])
+    resources = [ALTSERVER_PATH, ANISETTE_SERVER_PATH, ALTSTORE_PATH]
+    if NETMUXD_IS_AVAILABLE:
+        resources.append(NETMUXD_PATH)
+    Resource_Missed = not all(IsValidResource(path) for path in resources)
     latest_version_json = {}
 
     DebugPrint(f"RESOURCE_MISSED : {Resource_Missed}")
@@ -148,38 +193,35 @@ def CheckResource():
         latest_version_json: dict = FetchVersion()
 
     global current_version_json
-    current_version_json = json.load(open(VERSION_JSON_PATH))
+    with open(VERSION_JSON_PATH) as version_file:
+        current_version_json = json.load(version_file)
     # Resource dir
     if not os.path.exists(RESOURCE_DIRECTORY):
         print("Creating 'resource' directory")
         os.mkdir(RESOURCE_DIRECTORY)
     # AltServer
-    if not os.path.exists(ALTSERVER_PATH):
+    if not IsValidResource(ALTSERVER_PATH):
         print(f"Downloading Altserver {Latest_AltServer_Version}")
         DebugPrint(Altserver_URL)
-        response = requests.get(Altserver_URL)
-        open(ALTSERVER_PATH, "wb").write(response.content)
+        DownloadResource(Altserver_URL, ALTSERVER_PATH)
         current_version_json["AltServer"] = Latest_AltServer_Version
     # AltStore
-    if not os.path.exists(ALTSTORE_PATH):
+    if not IsValidResource(ALTSTORE_PATH):
         print(f"Downloading AltStore ipa {Latest_AltStore_Version}")
         DebugPrint(AltStore_URL)
-        response = requests.get(AltStore_URL)
-        open(ALTSTORE_PATH, "wb").write(response.content)
+        DownloadResource(AltStore_URL, ALTSTORE_PATH)
         current_version_json["AltStore"] = Latest_AltStore_Version
     # Netmuxd
-    if not os.path.exists(NETMUXD_PATH) and NETMUXD_IS_AVAILABLE:
+    if NETMUXD_IS_AVAILABLE and not IsValidResource(NETMUXD_PATH):
         print(f"Downloading netmuxd {Latest_Netmuxd_Version}")
         DebugPrint(Netmuxd_URL)
-        response = requests.get(Netmuxd_URL)
-        open(NETMUXD_PATH, "wb").write(response.content)
+        DownloadResource(Netmuxd_URL, NETMUXD_PATH)
         current_version_json["Netmuxd"] = Latest_Netmuxd_Version
     # Anisette-Server
-    if not os.path.exists(ANISETTE_SERVER_PATH):
+    if not IsValidResource(ANISETTE_SERVER_PATH):
         print(f"Downloading anisette-server {Latest_Anisette_Server_Version}")
         DebugPrint(Anisette_Server_URL)
-        response = requests.get(Anisette_Server_URL)
-        open(ANISETTE_SERVER_PATH, "wb").write(response.content)
+        DownloadResource(Anisette_Server_URL, ANISETTE_SERVER_PATH)
         current_version_json["Anisette-Server"] = Latest_Anisette_Server_Version
 
     # Write updated json data into version.json
@@ -256,7 +298,7 @@ def RemoveOutdatedResource():
         os.remove(ALTSTORE_PATH)
     if Anisette_Server_Is_Updatable:
         os.remove(ANISETTE_SERVER_PATH)
-    if Nermuxd_Is_Updatable:
+    if Nermuxd_Is_Updatable and os.path.exists(NETMUXD_PATH):
         os.remove(NETMUXD_PATH)
 
 
